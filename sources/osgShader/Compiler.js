@@ -48,7 +48,33 @@ var Compiler = function ( attributes, textureAttributes, shaderProcessor ) {
     this.initTextureAttributes();
 };
 
+Compiler.validAttributeTypeMember = [
+    'ShadowReceive',
+    'Light0',
+    'Light1',
+    'Light2',
+    'Light3',
+    'Light4',
+    'Light5',
+    'Light6',
+    'Light7',
+    'Material',
+    'Billboard',
+    'Morph',
+    'Skinning'
+];
+Compiler.validAttributeTypeMember.forEach( MACROUTILS.getOrCreateStateAttributeTypeMemberIndexFromName );
+
+
+Compiler.validTextureAttributeTypeMember = [
+    'Texture'
+];
+Compiler.validTextureAttributeTypeMember.forEach( MACROUTILS.getOrCreateTextureStateAttributeTypeMemberIndexFromName );
+
+
 Compiler.prototype = MACROUTILS.extend( {}, CompilerVertex, CompilerFragment, {
+
+    constructor: Compiler,
 
     getOrCreateProjectionMatrix: function () {
         return this.getOrCreateUniform( 'mat4', 'uProjectionMatrix' );

@@ -89,7 +89,6 @@ RenderLeaf.prototype = {
 
         return function ( state ) {
 
-
             var program = state.getLastProgramApplied();
             var programInstanceID = program.getInstanceID();
             var cache = state.getCacheUniformsApplyRenderLeaf();

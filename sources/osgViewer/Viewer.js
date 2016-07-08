@@ -329,6 +329,8 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
 
     renderingTraversal: function () {
 
+        this.getState()._frameStamp = this._frameStamp;
+
         if ( this.getScene().getSceneData() )
             this.getScene().getSceneData().getBound();
 
@@ -369,7 +371,10 @@ Viewer.prototype = MACROUTILS.objectInherit( View.prototype, {
                 stats.rStats( 'cullnode' ).set( cullVisitor._numNode );
                 stats.rStats( 'cullightsource' ).set( cullVisitor._numLightSource );
                 stats.rStats( 'cullgeometry' ).set( cullVisitor._numGeometry );
+
                 stats.rStats( 'pushstateset' ).set( renderer.getState()._numPushStateSet );
+
+                stats.rStats( 'state.apply' ).set( renderer.getState()._numApply );
             }
 
         }

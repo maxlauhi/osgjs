@@ -123,7 +123,7 @@ FrameBufferObject.flushAllDeletedGLRenderBuffers = function ( gl ) {
 };
 
 /** @lends FrameBufferObject.prototype */
-FrameBufferObject.prototype = MACROUTILS.objectInherit( GLObject.prototype, MACROUTILS.objectInherit( StateAttribute.prototype, {
+MACROUTILS.createPrototypeStateAttribute( FrameBufferObject, MACROUTILS.objectInherit( GLObject.prototype, MACROUTILS.objectInherit( StateAttribute.prototype, {
 
     attributeType: 'FrameBufferObject',
 
@@ -345,7 +345,7 @@ FrameBufferObject.prototype = MACROUTILS.objectInherit( GLObject.prototype, MACR
             gl.bindFramebuffer( gl.FRAMEBUFFER, null );
         }
     }
-} ) );
+} ) ), 'osg', 'FrameBufferObject' );
 
 
 module.exports = FrameBufferObject;

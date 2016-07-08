@@ -1,4 +1,5 @@
 'use strict';
+var MACROUTILS = require( 'osg/Utils' );
 var Notify = require( 'osg/notify' );
 var Program = require( 'osg/Program' );
 var Shader = require( 'osg/Shader' );
@@ -6,48 +7,29 @@ var Map = require( 'osg/Map' );
 var Compiler = require( 'osgShader/Compiler' );
 var ShaderProcessor = require( 'osgShader/ShaderProcessor' );
 
-// this is the list of attributes type we support by default to generate shader
-// if you need to adjust for your need provide or modify this list
-// if you still need more fine tuning to the filter, override the filterAttributeTypes
-var DefaultsAcceptAttributeTypes = [
-    'ShadowReceive',
-    'Skinning',
-    'Morph',
-    'ShadowTexture',
-    'Texture',
-    'Light',
-    'Material',
-    'Billboard',
-    'PointSize'
-];
-
 var ShaderGenerator = function () {
-    this._cache = new window.Map();
+    this._cache = {};
 
     // ShaderProcessor singleton used by ShaderGenerator
     // but user can replace it if needed
     this._shaderProcessor = new ShaderProcessor();
-    this._acceptAttributeTypes = new window.Set( DefaultsAcceptAttributeTypes );
 
     // ShaderCompiler Object to instanciate
-    this._ShaderCompiler = Compiler;
+    this._ShaderCompiler = undefined;
+
+    this.setShaderCompiler( Compiler );
 };
 
 ShaderGenerator.prototype = {
 
     // setShaderCompiler that will be used to createShader
-    setShaderCompiler: function ( compiler ) {
-        this._ShaderCompiler = compiler;
+    setShaderCompiler: function ( ShaderCompiler ) {
+        this._ShaderCompiler = ShaderCompiler;
+        if ( !ShaderCompiler.validAttributeTypeMemberCache ) this._computeStateAttributeCache( ShaderCompiler );
     },
 
     getShaderCompiler: function () {
         return this._ShaderCompiler;
-    },
-
-
-    // return a Set of accepted attribtues to generate shader
-    getAcceptAttributeTypes: function () {
-        return this._acceptAttributeTypes;
     },
 
 
@@ -66,23 +48,13 @@ ShaderGenerator.prototype = {
         // with a default set in a var and use overwrittable Set
         // when inheriting the class
         // Faster && Flexiblier
-        if ( attribute.libraryName() !== 'osg' && attribute.libraryName() !== 'osgShadow' && attribute.libraryName() !== 'osgAnimation' )
-            return true;
-
-        var attributeType = attribute.getType();
-
-        // accept only attribute listed in the container
-        if ( !this._acceptAttributeTypes.has( attributeType ) )
+        var libName = attribute.libraryName();
+        if ( libName !== 'osg' && libName !== 'osgShadow' && libName !== 'osgAnimation' )
             return true;
 
         // works for attribute that contains isEnabled
         // Light, Shadow. It let us to filter them to build a shader if not enabled
-        if ( attribute.isEnabled && !attribute.isEnabled() )
-            return true;
-        // // if it's a light and it's not enable we filter it
-        // if ( attribute.typeID === Light.typeID && !attribute.isEnabled() ) {
-        //     return true;
-        // }
+        if ( attribute.isEnabled && !attribute.isEnabled() ) return true;
 
         return false;
     },
@@ -91,63 +63,100 @@ ShaderGenerator.prototype = {
     getActiveAttributeList: function ( state, list ) {
 
         var hash = '';
-        var attributeMap = state.attributeMap;
-        var attributeMapKeys = attributeMap.getKeys();
+        var _attributeArray = state._attributeArray;
+        var cacheType = this._ShaderCompiler.validAttributeTypeMemberCache;
 
-        for ( var j = 0, k = attributeMapKeys.length; j < k; j++ ) {
-
-            var keya = attributeMapKeys[ j ];
-            var attributeStack = attributeMap[ keya ];
+        for ( var j = 0, k = cacheType.length; j < k; j++ ) {
+            var type = cacheType[ j ];
+            var attributeStack = _attributeArray[ type ];
+            if ( !attributeStack ) continue;
             var attr = attributeStack.lastApplied;
 
-            if ( this.filterAttributeTypes( attr ) )
+            if ( !attr || this.filterAttributeTypes( attr ) )
                 continue;
 
-            if ( attr.getHash ) {
-                hash += attr.getHash();
-            } else {
-                hash += attr.getType();
-            }
+            hash = hash + attr.getHash();
             list.push( attr );
         }
+
         return hash;
     },
+
+
+    // get actives attribute that comes from state
+    getActiveAttributeListCache: function ( state ) {
+
+        var hash = '';
+
+        var cacheType = this._ShaderCompiler.validAttributeTypeMemberCache;
+        for ( var i = 0, l = cacheType.length; i < l; i++ ) {
+            var type = cacheType[i];
+            var attributeStack = state._attributeArray[type];
+            if ( attributeStack && attributeStack.lastApplied ) hash += attributeStack.lastApplied.getHash();
+        }
+
+        return hash;
+    },
+
+
+    // get actives texture attribute that comes from state
+    getActiveTextureAttributeListCache: function ( state ) {
+
+        var hash = '';
+
+        var cacheType = this._ShaderCompiler.validTextureAttributeTypeMemberCache;
+        var textureUnitList = state.textureAttributeArrayList;
+        for ( var j = 0; j < textureUnitList.length; j++ ) {
+            var textureUnit = textureUnitList[ j ];
+            if ( !textureUnit ) continue;
+
+            for ( var i = 0; i < cacheType.length; i++ ) {
+                var type = cacheType[ i ];
+                var attributeStack = textureUnit[ type ];
+                if ( attributeStack && attributeStack.lastApplied ) {
+                    var lastApplied = attributeStack.lastApplied;
+
+                    // we check to filter texture null in hash
+                    // but it's probably better to just set the hash correctly of a tetxure null
+                    if ( lastApplied.isTextureNull && lastApplied.isTextureNull() ) continue;
+
+                    hash += lastApplied.getHash();
+                }
+            }
+        }
+
+        return hash;
+    },
+
 
     // get actives texture attribute that comes from state
     getActiveTextureAttributeList: function ( state, list ) {
         var hash = '';
-        var attributeMapList = state.textureAttributeMapList;
+        var _attributeArrayList = state.textureAttributeArrayList;
         var i, l;
+        var cacheType = this._ShaderCompiler.validTextureAttributeTypeMemberCache;
 
-        for ( i = 0, l = attributeMapList.length; i < l; i++ ) {
-            var attributeMapForUnit = attributeMapList[ i ];
-            if ( !attributeMapForUnit ) {
-                continue;
-            }
+        for ( i = 0, l = _attributeArrayList.length; i < l; i++ ) {
+            var _attributeArrayForUnit = _attributeArrayList[ i ];
+
+            if ( !_attributeArrayForUnit ) continue;
+
             list[ i ] = [];
 
-            var attributeMapForUnitKeys = attributeMapForUnit.getKeys();
+            for ( var j = 0, m = cacheType.length; j < m; j++ ) {
+                var type = cacheType[ j ];
 
-            for ( var j = 0, m = attributeMapForUnitKeys.length; j < m; j++ ) {
-
-                var key = attributeMapForUnitKeys[ j ];
-                var attributeStack = attributeMapForUnit[ key ];
-                if ( attributeStack.values().length === 0 ) {
-                    continue;
-                }
+                var attributeStack = _attributeArrayForUnit[ type ];
+                if ( !attributeStack ) continue;
 
                 var attr = attributeStack.lastApplied;
-                if ( this.filterAttributeTypes( attr ) )
+                if ( !attr || this.filterAttributeTypes( attr ) )
                     continue;
 
                 if ( attr.isTextureNull() )
                     continue;
 
-                if ( attr.getHash ) {
-                    hash += attr.getHash();
-                } else {
-                    hash += attr.getType();
-                }
+                hash += attr.getHash();
                 list[ i ].push( attr );
             }
         }
@@ -197,6 +206,30 @@ ShaderGenerator.prototype = {
         return new Map( uniforms );
     },
 
+    _computeStateAttributeCache: function ( CompilerShader ) {
+
+        var typeMemberNames = CompilerShader.validAttributeTypeMember || [];
+        var validTypeMemberList = [];
+        var i, il, cache;
+        var id;
+        for ( i = 0, il = typeMemberNames.length; i < il; i++ ) {
+            id = MACROUTILS.getIdFromTypeMember( typeMemberNames[ i ] );
+            if ( id !== undefined ) validTypeMemberList.push( id );
+        }
+        cache = new Uint8Array( validTypeMemberList );
+        CompilerShader.validAttributeTypeMemberCache = cache;
+
+        typeMemberNames = CompilerShader.validTextureAttributeTypeMember || [];
+        validTypeMemberList = [];
+        for ( i = 0, il = typeMemberNames.length; i < il; i++ ) {
+            id = MACROUTILS.getTextureIdFromTypeMember( typeMemberNames[ i ] );
+            if ( id !== undefined ) validTypeMemberList.push( id );
+        }
+        cache = new Uint8Array( validTypeMemberList );
+        CompilerShader.validTextureAttributeTypeMemberCache = cache;
+
+    },
+
     getOrCreateProgram: ( function () {
         // TODO: double check GC impact of this stack
         // TODO: find a way to get a hash dirty/cache on stateAttribute
@@ -205,20 +238,22 @@ ShaderGenerator.prototype = {
 
         return function ( state ) {
             // extract valid attributes
-            var hash = '';
-            attributes.length = 0;
-            textureAttributes.length = 0;
-            hash += this.getActiveAttributeList( state, attributes );
-            hash += this.getActiveTextureAttributeList( state, textureAttributes );
-
-            var cache = this._cache.get( hash );
-            if ( cache !== undefined ) {
-                return cache;
-            }
-
 
             // use ShaderCompiler, it can be overrided by a custom one
             var ShaderCompiler = this._ShaderCompiler;
+
+            var hash = this.getActiveAttributeListCache( state ) + this.getActiveTextureAttributeListCache( state );
+
+            var cache = this._cache[ hash ];
+            if ( cache !== undefined ) return cache;
+
+            // slow path to generate shader
+            attributes.length = 0;
+            textureAttributes.length = 0;
+
+            this.getActiveAttributeList( state, attributes );
+            this.getActiveTextureAttributeList( state, textureAttributes );
+
             var shaderGen = new ShaderCompiler( attributes, textureAttributes, this._shaderProcessor );
 
             /* develblock:start */
@@ -243,7 +278,7 @@ ShaderGenerator.prototype = {
             program.setActiveUniforms( this.getActiveUniforms( state, attributes, textureAttributes ) );
             program.generated = true;
 
-            this._cache.set( hash, program );
+            this._cache[ hash ] = program;
             return program;
         };
     } )()

@@ -23,6 +23,8 @@ var CompilerOffsetNormal = function () {
     Compiler.apply( this, arguments );
 };
 
+CompilerOffsetNormal.validAttributeTypeMember = Compiler.validAttributeTypeMember.slice( 0 );
+
 CompilerOffsetNormal.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {
         return 'CompilerOffsetNormal';
@@ -89,6 +91,8 @@ ShaderGeneratorCompilerOffsetNormal.prototype = ShaderGenerator.prototype;
 var CompilerOffsetTangent = function () {
     CompilerOffsetNormal.apply( this, arguments );
 };
+
+CompilerOffsetTangent.validAttributeTypeMember = CompilerOffsetNormal.validAttributeTypeMember.slice( 0 );
 
 CompilerOffsetTangent.prototype = MACROUTILS.objectInherit( CompilerOffsetNormal.prototype, {
     getFragmentShaderName: function () {

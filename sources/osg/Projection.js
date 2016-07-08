@@ -16,6 +16,4 @@ Projection.prototype = MACROUTILS.objectInherit( Node.prototype, {
     }
 } );
 
-MACROUTILS.setTypeID( Projection );
-
 module.exports = Projection;

@@ -22,6 +22,9 @@ var CompilerColorGeometry = function () {
     Compiler.apply( this, arguments );
 };
 
+CompilerColorGeometry.validAttributeTypeMember = Compiler.validAttributeTypeMember.slice( 0 );
+
+
 CompilerColorGeometry.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {
         return 'CompilerDebugGeometry';
@@ -54,6 +57,8 @@ ShaderGeneratorCompilerColorGeometry.prototype = ShaderGenerator.prototype;
 var CompilerColorSkinning = function () {
     Compiler.apply( this, arguments );
 };
+
+CompilerColorSkinning.validAttributeTypeMember = Compiler.validAttributeTypeMember.slice( 0 );
 
 CompilerColorSkinning.prototype = MACROUTILS.objectInherit( Compiler.prototype, {
     getFragmentShaderName: function () {

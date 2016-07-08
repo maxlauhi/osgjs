@@ -102,7 +102,7 @@ ExpirePagedLODVisitor.prototype = MACROUTILS.objectInherit( NodeVisitor.prototyp
     }
 } );
 
-DatabasePager.prototype = MACROUTILS.objectLibraryClass( {
+MACROUTILS.createPrototypeClass( DatabasePager, {
 
     setTargetMaximumNumberOfPageLOD: function ( target ) {
         this._targetMaximumNumberOfPagedLOD = target;

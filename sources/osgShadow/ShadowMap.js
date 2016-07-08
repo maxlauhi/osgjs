@@ -178,7 +178,7 @@ var ShadowMap = function ( settings, shadowTexture ) {
 
 
 /** @lends ShadowMap.prototype */
-ShadowMap.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( ShadowTechnique.prototype, {
+MACROUTILS.createPrototypeClass( ShadowMap, MACROUTILS.objectInherit( ShadowTechnique.prototype, {
 
     getDepthRange: function () {
         return this._depthRange;
@@ -1150,7 +1150,5 @@ ShadowMap.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( S
 } ), 'osgShadow', 'ShadowMap' );
 
 ShadowMap.EPSILON = 5e-3;
-
-MACROUTILS.setTypeID( ShadowMap );
 
 module.exports = ShadowMap;

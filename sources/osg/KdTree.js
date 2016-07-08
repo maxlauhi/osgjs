@@ -371,7 +371,7 @@ var KdTree = function () {
     this._triangles = null; // Float32Array
 };
 
-KdTree.prototype = MACROUTILS.objectLibraryClass( {
+MACROUTILS.createPrototypeClass( KdTree, {
     getVertices: function () {
         return this._vertices;
     },

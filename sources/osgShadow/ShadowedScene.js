@@ -31,7 +31,7 @@ var ShadowedScene = function () {
 };
 
 /** @lends ShadowedScene.prototype */
-ShadowedScene.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( Node.prototype, {
+MACROUTILS.createPrototypeNode( ShadowedScene, MACROUTILS.objectInherit( Node.prototype, {
 
     getReceivingStateSet: function () {
 
@@ -126,9 +126,8 @@ ShadowedScene.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInheri
 
 
 } ), 'osgShadow', 'ShadowedScene' );
-MACROUTILS.setTypeID( ShadowedScene );
 
 // same code like Node
-CullVisitor.prototype[ ShadowedScene.typeID ] = CullVisitor.prototype[ Node.typeID ];
+CullVisitor.registerApplyNodeType( ShadowedScene.nodeTypeID, CullVisitor.getApplyNodeType( Node.nodeTypeID ) );
 
 module.exports = ShadowedScene;

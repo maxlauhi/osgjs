@@ -12,7 +12,7 @@ var Object = function () {
 };
 
 /** @lends Object.prototype */
-Object.prototype = MACROUTILS.objectLibraryClass( {
+MACROUTILS.createPrototypeClass( Object, {
 
     // this method works only if constructor is set correctly
     // see issue https://github.com/cedricpinson/osgjs/issues/494

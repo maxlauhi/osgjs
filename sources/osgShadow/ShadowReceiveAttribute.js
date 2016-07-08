@@ -44,7 +44,7 @@ var ShadowReceiveAttribute = function ( lightNum, disable ) {
 };
 
 ShadowReceiveAttribute.uniforms = {};
-ShadowReceiveAttribute.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.objectInherit( StateAttribute.prototype, {
+MACROUTILS.createPrototypeStateAttribute( ShadowReceiveAttribute, MACROUTILS.objectInherit( StateAttribute.prototype, {
 
     attributeType: 'ShadowReceive',
 
@@ -307,12 +307,19 @@ ShadowReceiveAttribute.prototype = MACROUTILS.objectLibraryClass( MACROUTILS.obj
     },
 
     getHash: function () {
+        if ( window.useHashCache ) {
+            if ( !this._hashCashed )
+                this._hashCashed = this.getHashInternal();
+            return this._hashCashed;
+        }
+        return this.getHashInternal();
+    },
+
+    getHashInternal: function () {
         return this.getTypeMember() + '_' + this.getAlgorithm() + '_' + this.getKernelSizePCF() + '_' + this.getFakePCF() + '_' + this.getRotateOffset();
 
     }
 
 } ), 'osgShadow', 'ShadowReceiveAttribute' );
-
-MACROUTILS.setTypeID( ShadowReceiveAttribute );
 
 module.exports = ShadowReceiveAttribute;

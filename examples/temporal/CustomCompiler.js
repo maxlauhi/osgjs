@@ -11,6 +11,12 @@ var CustomCompiler;
         osgShader.Compiler.apply( this, arguments );
     };
 
+    CustomCompiler.validAttributeTypeMember = osgShader.Compiler.validAttributeTypeMember.slice( 0 );
+    CustomCompiler.validAttributeTypeMember.push( 'Temporal' );
+    CustomCompiler.validAttributeTypeMember.forEach( osg.getOrCreateStateAttributeTypeMemberIndexFromName );
+
+    CustomCompiler.validTextureAttributeTypeMember = osgShader.Compiler.validTextureAttributeTypeMember.slice( 0 );
+
     CustomCompiler.prototype = osg.objectInherit( osgShader.Compiler.prototype, {
 
         getOrCreateProjectionMatrix: function () {
