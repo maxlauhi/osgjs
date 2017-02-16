@@ -6,6 +6,7 @@
     var OSG = window.OSG;
     var osg = OSG.osg;
     var osgViewer = OSG.osgViewer;
+    var osgGA = OSG.osgGA;
     var osgShader = OSG.osgShader;
     var osgUtil = OSG.osgUtil;
     var Texture = osg.Texture;
@@ -639,7 +640,7 @@
 
                 var scene = self._modelsMap[ self._config.scene ];
                 scene.dirtyBound();
-                self._viewer.getManipulator().computeHomePosition( OSG.Manipulator.COMPUTE_HOME_USING_SPHERE );
+                self._viewer.getManipulator().computeHomePosition( osgGA.Manipulator.COMPUTE_HOME_USING_SPHERE );
 
             } );
 
